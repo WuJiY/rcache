@@ -6,17 +6,15 @@
  * @license MIT
  */
 
-namespace noodlehaus\rcache;
-
 // creates connection
-function init($host = 'localhost', $port = 6379) {
-  $conn = new \redis();
+function rcache_init($host = 'localhost', $port = 6379) {
+  $conn = new Redis();
   $conn->pconnect($host, $port);
   return $conn;
 }
 
 // get a value
-function get($conn, $key) {
+function rcache_get($conn, $key) {
 
   $type = $conn->type($key);
 
@@ -24,7 +22,7 @@ function get($conn, $key) {
     return null;
 
   // we have a set, so return all values for each member
-  if ($type == \redis::REDIS_SET) {
+  if ($type == Redis::REDIS_SET) {
     $values = $conn->mget($conn->smembers($key));
     return array_map(function ($row) {
       return json_decode($row, true);
@@ -36,14 +34,14 @@ function get($conn, $key) {
 }
 
 // stores a key into the cache
-function set($conn, $keys, $cval, $ttl = 0) {
+function rcache_set($conn, $keys, $cval, $ttl = 0) {
 
   $keys = trim($keys, ':');
-  $conn = init();
+  $conn = rcache_init();
 
   // serialize then store
   $cval = json_encode($cval);
-  $conn = init();
+  $conn = rcache_init();
 
   // it's a set, check for ttl and use set or setex
   if ($ttl > 0)
@@ -71,7 +69,7 @@ function set($conn, $keys, $cval, $ttl = 0) {
 }
 
 // invalidates a key or keys from the cache
-function del() {
+function rcache_del() {
 
   // coerce, assume array always
   $keys = func_get_args();
@@ -85,4 +83,3 @@ function del() {
     ));
   }
 }
-?>
